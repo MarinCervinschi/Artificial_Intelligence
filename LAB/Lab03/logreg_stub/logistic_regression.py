@@ -23,7 +23,6 @@ def sigmoid(x):
     Apply the sigmoid function on x.
     See https://en.wikipedia.org/wiki/Sigmoid_function
     """
-
     return np.exp(x) / (1 + np.exp(x))
 
 
@@ -50,8 +49,7 @@ def loss(y_true, y_pred):
 
     https://ml-cheatsheet.readthedocs.io/en/latest/loss_functions.html#cross-entropy
     """
-    N = y_pred.size
-    return - 1/N * np.sum(y_true * np.log(y_pred + eps) + (1 - y_true) * np.log(1 - y_pred + eps))
+    return - np.mean(y_true * np.log(y_pred + eps) + (1 - y_true) * np.log(1 - y_pred + eps), axis=0)
 
 
 def dloss_dw(y_true, y_pred, X):
@@ -80,7 +78,7 @@ def dloss_dw(y_true, y_pred, X):
     Compute the derivative of loss function w.r.t. weights.
     For its computation, please refer to the slide.
     """
-    return (np.transpose(X) @ (y_true - y_pred)) / N
+    return - X.T @ (y_true - y_pred) / N
 
 
 class LogisticRegression:
@@ -120,7 +118,7 @@ class LogisticRegression:
             # Compute predictions
             # -> p = ...
             """
-            p = sigmoid(np.dot(X, self.w))
+            p = sigmoid(X @ self.w)
 
             """
             # Print loss between Y and predictions p
@@ -128,7 +126,6 @@ class LogisticRegression:
             """
             L = loss(Y, p)
 
-            # Uncomment the following lines when the loss is implemented to print it
             if verbose and e % 500 == 0:
                 print(f'Epoch {e:4d}: loss={L}')
 
@@ -137,8 +134,8 @@ class LogisticRegression:
             # w(t+1) = w(t) - learning_rate * dL/dw(t)
             # -> self.w = ...
             """
-            self.w += (learning_rate * dloss_dw(Y, p, X))
 
+            self.w = self.w - learning_rate * dloss_dw(Y, p, X)
 
 
     def predict(self, X):
@@ -163,7 +160,6 @@ class LogisticRegression:
         b) apply the sigmoid function (this way, y in [0,1])
         c) discretize the output (this way, y in {0,1})
         """
-        p = sigmoid(np.dot(X, self.w))
 
-        return p > 0.5
-
+        # remove random prections before coding the solution
+        return np.round(sigmoid(X @ self.w))
