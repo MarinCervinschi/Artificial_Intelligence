@@ -3,6 +3,7 @@ import numpy as np
 
 from utils import cmap
 
+
 class WeakClassifier:
     """
     Function that models a WeakClassifier based on a simple threshold.
@@ -21,7 +22,7 @@ class WeakClassifier:
         possible_labels = np.unique(Y)
 
         """ pick a random feature (see np.random.choice) """
-        self._dim = np.random.choice(d)
+        self._dim = np.random.choice(a=range(0, d))
 
         """ pick a random threshold (see np.random.uniform)
             NB: look at the interval [min,max] from the selected dimension """
@@ -31,7 +32,7 @@ class WeakClassifier:
         """ pick a random verse (see np.random.choice)
             case a) feature >= _threshold ==>> then predict 1
             case b) feature >= _threshold ==>> then predict -1 """
-        self._label_above_split = np.random.choice(possible_labels)
+        self._label_above_split = np.random.choice(a=possible_labels)
 
     def predict(self, X: np.ndarray):
 
@@ -42,7 +43,7 @@ class WeakClassifier:
         feature = X[:, self._dim]
 
         y_pred[feature >= self._threshold] = self._label_above_split
-        y_pred[feature < self._threshold] = -self._label_above_split
+        y_pred[feature < self._threshold] = -1 * self._label_above_split
 
         return y_pred
 
@@ -89,23 +90,26 @@ class AdaBoostClassifier:
         if d != 2:
             verbose = False  # only plot learning if 2 dimensional
 
-        assert possible_labels.size == 2, 'Error: data is not binary'
+        assert possible_labels.size == 2, "Error: data is not binary"
 
         """ initialize the sample weights as equally probable """
         sample_weights = np.ones(shape=n) / n
 
         for l in range(self.n_learners):
 
-            """ choose the indexes of 'difficult' samples. See np.random.choice
+            """choose the indexes of 'difficult' samples. See np.random.choice
             https://docs.scipy.org/doc/numpy-1.15.1/reference/generated/numpy.random.choice.html
-            Pay attention to p, which indicates the probabilities that will be used during sampling."""
-            cur_idx = np.random.choice(n, size=n, replace=True, p=sample_weights)
+            Pay attention to p, which indicates the probabilities that will be used during sampling.
+            """
+            cur_idx = np.random.choice(
+                a=range(0, n), size=n, replace=True, p=sample_weights
+            )
 
             # extract 'difficult' samples
             cur_X = X[cur_idx]
             cur_Y = Y[cur_idx]
 
-              # search for a weak classifier
+            # search for a weak classifier
             error = 1
             n_trials = 0
             cur_wclass = None
@@ -124,36 +128,27 @@ class AdaBoostClassifier:
 
                 """ according to the predicitons and labels, compute the error
                     made by the current classifier (namely, cur_wclass) """
-                error = np.sum(sample_weights[y_pred != cur_Y])
+                error = np.sum(sample_weights[cur_idx[y_pred != cur_Y]])
 
                 n_trials += 1
                 if n_trials > self.n_max_trials:
                     # initialize the sample weights again
                     sample_weights = np.ones(shape=n) / n
 
-
             """ compute the efficiency of the weak classifier """
-            alpha = np.log((1 - error) / error) / 2
 
-            self.alphas[l] = alpha
+            self.alphas[l] = alpha = np.log((1 - error) / error) / 2
 
             # append the learned weak classifier to the chain
             self.learners.append(cur_wclass)
 
             """ based on the right and wrong predictions, update sample_weights"""
-            sample_weights[y_pred == cur_Y] *= np.exp(-self.alphas[l]) / n
-            sample_weights[y_pred != cur_Y] *= np.exp(self.alphas[l]) / n
-
-            total_weight = np.sum(sample_weights)
-            if total_weight > 0:
-                sample_weights /= total_weight
-            else:
-                sample_weights = np.ones_like(sample_weights) / n
+            sample_weights[cur_idx[y_pred == cur_Y]] *= np.exp(-alpha)
+            sample_weights[cur_idx[y_pred != cur_Y]] *= np.exp(alpha)
+            sample_weights /= np.sum(sample_weights)
 
             if verbose:
-                self._plot(cur_X, y_pred, sample_weights[cur_idx],
-                           self.learners[-1], l)
-
+                self._plot(cur_X, y_pred, sample_weights[cur_idx], self.learners[-1], l)
 
     def predict(self, X: np.ndarray):
         """
@@ -173,32 +168,44 @@ class AdaBoostClassifier:
         num_samples = X.shape[0]
 
         """ fill y_pred with the predictions """
-        #y_pred = np.sign(np.sum(self.alphas * self.learners))
-        y_pred = np.sign(np.sum([alpha * learner.predict(X) for alpha, learner in zip(self.alphas, self.learners)], axis=0))
-
+        y_pred = np.sign(
+            np.sum(
+                [
+                    alpha * learner.predict(X)
+                    for alpha, learner in zip(self.alphas, self.learners)
+                ],
+                axis=0,
+            )
+        )
 
         return y_pred
 
-
-    def _plot(self, X: np.ndarray, y_pred: np.ndarray, weights: np.ndarray,
-              learner: WeakClassifier, iteration: int):
+    def _plot(
+        self,
+        X: np.ndarray,
+        y_pred: np.ndarray,
+        weights: np.ndarray,
+        learner: WeakClassifier,
+        iteration: int,
+    ):
 
         # plot
         plt.clf()
-        plt.scatter(X[:, 0], X[:, 1], c=y_pred, s=weights * 50000,
-                    cmap=cmap, edgecolors='k')
+        plt.scatter(
+            X[:, 0], X[:, 1], c=y_pred, s=weights * 50000, cmap=cmap, edgecolors="k"
+        )
 
         M1, m1 = np.max(X[:, 1]), np.min(X[:, 1])
         M0, m0 = np.max(X[:, 0]), np.min(X[:, 0])
 
         cur_split = learner._threshold
         if learner._dim == 0:
-            plt.plot([cur_split, cur_split], [m1, M1], 'k-', lw=5)
+            plt.plot([cur_split, cur_split], [m1, M1], "k-", lw=5)
         else:
-            plt.plot([m0, M0], [cur_split, cur_split], 'k-', lw=5)
+            plt.plot([m0, M0], [cur_split, cur_split], "k-", lw=5)
         plt.xlim([m0, M0])
         plt.ylim([m1, M1])
         plt.xticks([])
         plt.yticks([])
-        plt.title('Iteration: {:04d}'.format(iteration))
+        plt.title("Iteration: {:04d}".format(iteration))
         plt.waitforbuttonpress(timeout=0.1)

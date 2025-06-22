@@ -13,5 +13,4 @@ requests
 scikit-learn
 scipy
 six
-scikit-learn
 urllib3
