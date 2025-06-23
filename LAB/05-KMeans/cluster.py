@@ -151,7 +151,7 @@ class KMeans:
             centers, assignments = self.single_fit_predict(X)
             cost = self.compute_cost_function(X, centers, assignments)
             if self.verbose:
-                print(f"Iteration: {i} - cost function: {cost: .2f}")
+                print(f"Iteration: {i} - cost function: {cost: .6f}")
             if cost < cost_min:
                 cost_min = cost
                 assignments_opt = assignments
