@@ -6,6 +6,8 @@ import numpy as np
 from avengers import main_kmeans_img
 from cluster import KMeans
 from datasets import gaussians_dataset, two_moon_dataset
+from sklearn.metrics import accuracy_score
+from scipy.optimize import linear_sum_assignment
 
 plt.ion()
 
@@ -26,18 +28,33 @@ def kmeans_2d(X: np.ndarray, cl: np.ndarray, n_cl: int) -> None:
 
     # solve kmeans optimization
     cl_algo = KMeans(n_cl=n_cl, verbose=True, n_init=5)
+
     labels = cl_algo.fit_predict(X)
 
     # visualize results
     ax[1].scatter(X[:, 0], X[:, 1], c=labels, s=40)
     plt.waitforbuttonpress()
 
+    # compute clustering accuracy
+
+    # Map predicted labels to true labels
+    D = np.zeros((n_cl, n_cl), dtype=int)
+    for i in range(n_cl):
+        for j in range(n_cl):
+            D[i, j] = np.sum((labels == i) & (cl == j))
+    row_ind, col_ind = linear_sum_assignment(-D)
+    label_map = dict(zip(row_ind, col_ind))
+    mapped_labels = np.array([label_map[l] for l in labels])
+
+    acc = accuracy_score(cl, mapped_labels)
+    print(f'Clustering accuracy: {acc:.4f}')
+
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', choices=('gaussians', 'twomoon', 'avengers'),
-                        default='avengers')
+                        default='gaussians')
     p = parser.parse_args()
 
     if p.dataset == 'gaussians':
