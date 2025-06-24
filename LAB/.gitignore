@@ -10,3 +10,7 @@ mnist
 __pycache__
 
 *.npy
+
+*.pgm
+
+att_faces/
