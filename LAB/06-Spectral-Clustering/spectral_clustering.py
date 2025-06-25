@@ -1,5 +1,7 @@
 import numpy as np
 from sklearn.cluster import KMeans
+from scipy.spatial.distance import cdist
+
 import matplotlib.pyplot as plt
 
 plt.ion()
@@ -28,6 +30,7 @@ def spectral_clustering(data, n_cl, sigma=1., fiedler_solution=False):
         raise Exception("Cannot apply Fiedler to more than 2 clusters!")
 
     # compute distances
+    #dist_matrix = cdist(data, data, metric='sqeuclidean')
     dist_matrix = ((np.expand_dims(data, 0) - np.expand_dims(data, 1)) ** 2).sum(-1)
     # compute affinity matrix
     affinity_matrix = np.exp(-dist_matrix / (sigma ** 2))

@@ -20,7 +20,7 @@ def main_spectral_clustering():
     ax[0].scatter(data[:, 0], data[:, 1], c=cl, s=40)
 
     # run spectral clustering - tune n_cl and sigma!!!
-    labels = spectral_clustering(data, n_cl=2, sigma=0.1, fiedler_solution=False)
+    labels = spectral_clustering(data, n_cl=2, sigma=0.1, fiedler_solution=True)
 
     # visualize results
     ax[1].scatter(data[:, 0], data[:, 1], c=labels, s=40)
