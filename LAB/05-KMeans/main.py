@@ -27,7 +27,7 @@ def kmeans_2d(X: np.ndarray, cl: np.ndarray, n_cl: int) -> None:
     plt.waitforbuttonpress()
 
     # solve kmeans optimization
-    cl_algo = KMeans(n_cl=n_cl, verbose=True, n_init=5)
+    cl_algo = KMeans(n_cl=n_cl, verbose=False, n_init=5)
 
     labels = cl_algo.fit_predict(X)
 

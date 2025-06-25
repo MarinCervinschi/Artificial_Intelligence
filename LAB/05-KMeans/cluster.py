@@ -3,6 +3,7 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.random import uniform
+from numpy.linalg import norm
 
 
 class KMeans:
@@ -92,7 +93,7 @@ class KMeans:
             between it and all centers.
             """
             new_assignments = np.argmin(
-                np.linalg.norm(X[:, np.newaxis] - centers, axis=2), axis=1
+                norm(X[:, np.newaxis] - centers, axis=2), axis=1
             )
 
             """
@@ -100,12 +101,9 @@ class KMeans:
             """
             centers = np.array(
                 [
-                    (
-                        X[new_assignments == k].mean(axis=0)
-                        if np.any(new_assignments == k)
-                        else centers[k]
-                    )
+                    X[new_assignments == k].mean(axis=0)
                     for k in range(self.n_cl)
+                    if np.any(new_assignments == k)
                 ]
             )
 
@@ -135,7 +133,7 @@ class KMeans:
             computed cost function.
         """
         # Calcola la distanza quadratica tra ogni punto e il centro del cluster assegnato
-        return np.sum(np.linalg.norm(X - centers[assignments], axis=1) ** 2)
+        return np.sum(norm(X - centers[assignments], axis=1) ** 2)
 
     def fit_predict(self, X: np.ndarray):
         """
